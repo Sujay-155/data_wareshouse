@@ -31,7 +31,7 @@ def fetch_current_weather_for_city(city_name: str) -> pd.DataFrame:
     params = {
         "key": WEATHER_API_KEY,
         "q": city_name,
-        "aqi": "no",  # we don't need air quality for now
+        "aqi": "yes",  
     }
 
     response = requests.get(BASE_URL_CURRENT, params=params)
@@ -43,16 +43,19 @@ def fetch_current_weather_for_city(city_name: str) -> pd.DataFrame:
     current = data.get("current", {})
 
     row = {
-        "city_name": location.get("name"),
-        "country": location.get("country"),
+        # keep lat/lon for join
         "lat": location.get("lat"),
         "lon": location.get("lon"),
-        "localtime": location.get("localtime"),
+
+        # useful to still have these for debugging / checks
+        "city_name_api": location.get("name"),
+        "country_api": location.get("country"),
+
+        # metrics we actually care about
         "temp_c": current.get("temp_c"),
         "humidity": current.get("humidity"),
-        "wind_kph": current.get("wind_kph"),
         "condition_text": current.get("condition", {}).get("text"),
-        "last_updated": current.get("last_updated"),
+        "aqi": current.get("air_quality", {}).get("us-epa-index"),  # Air Quality Index
     }
 
     df = pd.DataFrame([row])
