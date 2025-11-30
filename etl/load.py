@@ -18,12 +18,29 @@ def get_engine():
     return create_engine(connection_string)
 
 
-def load_dim_city(df: pd.DataFrame, merged_df: pd.DataFrame):
+def is_dim_city_populated():
+    """Check if dim_city table already has data."""
+    engine = get_engine()
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT COUNT(*) FROM dim_city"))
+        count = result.scalar()
+        return count is not None and count > 0
+
+
+def load_dim_city(df: pd.DataFrame, merged_df: pd.DataFrame, force_reload: bool = False):
     """
     Load city dimension data into dim_city table.
     Expects merged_df to have: id, city, country, population, capital, lat, lon
+    
+    Args:
+        force_reload: If True, truncate and reload. If False, skip if data exists.
     """
     engine = get_engine()
+    
+    # Check if dim_city already has data
+    if not force_reload and is_dim_city_populated():
+        print("[LOAD] dim_city already populated, skipping (use force_reload=True to reload)")
+        return
     
     # Prepare data for dim_city from merged_df (has all columns)
     dim_city_df = merged_df[["id", "city", "country", "population", "capital", "lat_csv", "lon_csv"]].copy()
