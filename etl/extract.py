@@ -64,16 +64,21 @@ def fetch_current_weather_for_city(city_name: str) -> pd.DataFrame:
 
 def fetch_current_weather_for_cities(city_list):
     """
-    Fetch current weather for a list of cities and return a combined DataFrame.
+    Fetch current weather for a list of cities (dicts with id, city, country) and return a combined DataFrame.
     """
     all_rows = []
 
-    for city in city_list:
+    for city_dict in city_list:
+        city_name = f"{city_dict['city']}, {city_dict['country']}"
         try:
-            df_city = fetch_current_weather_for_city(city)
+            df_city = fetch_current_weather_for_city(city_name)
+            # Add original CSV data for robust joining
+            df_city["id"] = city_dict["id"]
+            df_city["city_csv"] = city_dict["city"]
+            df_city["country_csv"] = city_dict["country"]
             all_rows.append(df_city)
         except Exception as e:
-            print(f"[WARN] Failed to fetch weather for {city}: {e}")
+            print(f"[WARN] Failed to fetch weather for {city_name}: {e}")
 
     if not all_rows:
         return pd.DataFrame()  # empty if all failed
